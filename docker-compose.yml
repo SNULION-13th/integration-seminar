@@ -1,22 +1,54 @@
-# docker-compose.yml
 services:
-  # 'db'라는 이름의 서비스를 정의합니다.
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: dashboard_api_service
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      es:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      ES_HOST: es
+      ES_PORT: 9200
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - ./api/uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_service
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
   db:
     image: mysql:8.0
     container_name: dashboard_mysql_service
     ports:
       - "3306:3306"
-    # .env 파일에 정의된 변수들을 컨테이너의 환경변수로 주입합니다.
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_HOST: "%"
-    # 볼륨을 설정하여 컨테이너가 삭제되어도 데이터가 보존되도록 합니다.
     volumes:
       - mysql_data:/var/lib/mysql
-    # healthcheck: 컨테이너가 정상적으로 동작하는지 주기적으로 확인합니다.
     healthcheck:
       test:
         [
@@ -30,7 +62,45 @@ services:
     restart: unless-stopped
     command: --default-authentication-plugin=caching_sha2_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
-# 위에서 사용한 'mysql_data' 볼륨을 정의합니다.
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
+    container_name: elastic_service
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -f http://localhost:9200/_cat/indices >/dev/null",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: >
+      bash -c "
+        if [ ! -d plugins/analysis-nori ]; then
+          elasticsearch-plugin install --batch analysis-nori;
+        fi &&
+        elasticsearch
+      "
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_service
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: >
+      redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+
 volumes:
   mysql_data:
+    driver: local
+  es_data:
     driver: local
