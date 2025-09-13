@@ -1,5 +1,7 @@
 // main.js
 
+const baseurl = "http://localhost:8000";
+
 function addItem() {
   const title = document.getElementById("title").value;
   const description = document.getElementById("desc").value;
@@ -14,44 +16,45 @@ function addItem() {
     formData.append("image", fileInput.files[0]);
   }
 
-  // TODO: 실제 서버에 POST 요청을 보내야 함
-  const now = new Date();
-  formData.append("created_at", now.toISOString());
-
-  const newItem = Object.fromEntries(formData.entries());
-  renderResults([newItem]);
+  // 기존의 dummy code를 삭제하고 아래로 대체
+  fetch(`${baseurl}/items`, {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      renderResults([data]);
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
 }
 
 function searchItems() {
-  // TODO: 실제 서버에 GET 요청을 보내야 함
   const query = document.getElementById("query").value;
-  alert(`아직 검색 기능이 구현되지 않았습니다.\nquery=${query}`);
+  fetch(`${baseurl}/search?query=${encodeURIComponent(query)}`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data.results)) {
+        renderResults(data.results);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
 }
 
 function formatDateTime(isoStr) {
-  const isoWithZ = isoStr.endsWith("Z") ? isoStr : isoStr + "Z";
-  const _datetime = new Date(isoWithZ);
-
-  const year = _datetime.getFullYear();
-  const month = String(_datetime.getMonth() + 1).padStart(2, "0");
-  const date = String(_datetime.getDate()).padStart(2, "0");
-  const hour = String(_datetime.getHours()).padStart(2, "0");
-  const minute = String(_datetime.getMinutes()).padStart(2, "0");
-  const second = String(_datetime.getSeconds()).padStart(2, "0");
-
-  return `${year}-${month}-${date} ${hour}:${minute}:${second}`;
-}
-
-function renderResults(items) {
-  const container = document.getElementById("result");
-  if (!items || items.length === 0) {
-    container.innerHTML = "<p>결과가 없습니다.</p>";
-    return;
-  }
   container.innerHTML = items
     .map((item) => {
       const imgTag = item.image_path
-        ? `<img src="${item.image_path}" style="max-width:100px;" />`
+        ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`
         : "";
       return `
         <div class="card">
