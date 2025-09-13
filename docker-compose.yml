@@ -1,0 +1,36 @@
+# docker-compose.yml
+services:
+  # 'db'라는 이름의 서비스를 정의합니다.
+  db:
+    image: mysql:8.0
+    container_name: dashboard_mysql_service
+    ports:
+      - "3306:3306"
+    # .env 파일에 정의된 변수들을 컨테이너의 환경변수로 주입합니다.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_HOST: "%"
+    # 볼륨을 설정하여 컨테이너가 삭제되어도 데이터가 보존되도록 합니다.
+    volumes:
+      - mysql_data:/var/lib/mysql
+    # healthcheck: 컨테이너가 정상적으로 동작하는지 주기적으로 확인합니다.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysql -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} -e 'SELECT 1'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    command: --default-authentication-plugin=caching_sha2_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+# 위에서 사용한 'mysql_data' 볼륨을 정의합니다.
+volumes:
+  mysql_data:
+    driver: local
