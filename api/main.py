@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from lifespan import lifespan
-from routes import items, search
+from routes import items, search, searchAll
 
 app = FastAPI(lifespan=lifespan)
 
@@ -21,3 +21,4 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.include_router(items.router, prefix="/items")
 app.include_router(search.router, prefix="/search")
+app.include_router(searchAll.router, prefix="/searchAll")
