@@ -62,7 +62,7 @@ lsof -i :3306
 kill -9 {PID}
 
 # Ubuntu
-sudo lsof -i :3306
+sudo kill -9 {PID}
 sudo kill -9 {PID}
 ```
 
