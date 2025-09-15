@@ -2,6 +2,8 @@ from typing import Any, Dict, List
 
 from elasticsearch import Elasticsearch
 from settings import Settings
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 settings = Settings()
 
@@ -79,3 +81,43 @@ class SearchService:
 
     def close(self) -> None:
         self.es.close()
+
+
+class MySQLSearchService:
+    TABLE = "dashboard_items"
+
+    def __init__(self, engine: AsyncEngine):
+        self.engine = engine
+
+    async def search_items(self) -> List[Dict[str, Any]]:
+        sql = text(
+            f"""
+            SELECT id, title, description, image_path, created_at
+            FROM `{self.TABLE}`
+            ORDER BY created_at DESC
+        """
+        )
+        async with self.engine.connect() as conn:
+            res = await conn.execute(sql)
+            rows = res.mappings().all()
+
+        hits: List[Dict[str, Any]] = []
+        for r in rows:
+            created = r["created_at"]
+            if hasattr(created, "isoformat"):
+                created = created.isoformat(sep=" ", timespec="seconds")
+            hits.append(
+                {
+                    "_id": str(r["id"]),
+                    "_source": {
+                        "title": r["title"],
+                        "description": r["description"],
+                        "image_path": r["image_path"],
+                        "created_at": created,
+                    },
+                }
+            )
+        return hits
+
+    async def close(self) -> None:
+        pass

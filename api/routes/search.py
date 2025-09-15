@@ -51,3 +51,12 @@ async def search_items(query: str, request: Request):
             pass
 
     return SearchResults(results=hits)
+
+
+@router.get("/all", response_model=SearchResults)
+async def list_items(request: Request):
+    hits = await request.app.state.mysqlsearch.search_items()
+    results = [
+        DashboardItemResponse(**hit["_source"], id=int(hit["_id"])) for hit in hits
+    ]
+    return SearchResults(results=results)

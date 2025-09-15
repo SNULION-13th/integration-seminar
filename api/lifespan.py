@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import redis.asyncio as redis
 from database import engine
 from models import Base
-from search_service import SearchService
+from search_service import MySQLSearchService, SearchService
 from settings import Settings
 
 
@@ -11,6 +11,7 @@ from settings import Settings
 async def lifespan(app):
     settings = Settings()
     app.state.search = SearchService()
+    app.state.mysqlsearch = MySQLSearchService(engine)
 
     try:
         redis_kwargs = {
@@ -41,3 +42,4 @@ async def lifespan(app):
     yield
 
     app.state.search.close()
+    app.state.mysqlsearch.close()
