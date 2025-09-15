@@ -1,4 +1,7 @@
 // main.js
+//<img src=x onerror="alert('echo hi~')"></img>
+//<div tabindex="0" onkeydown="console.log(event.key)"><img src = x ></img></div>
+
 const baseurl = "http://localhost:8000";
 
 function addItem() {
@@ -63,25 +66,85 @@ function formatDateTime(isoStr) {
   return `${year}-${month}-${date} ${hour}:${minute}:${second}`;
 }
 
+function fetchAllItems() {
+  fetch(`${baseurl}/items`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        renderResults(data);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
+}
+
+// function renderResults(items) {
+//   const container = document.getElementById("result");
+//   if (!items || items.length === 0) {
+//     container.innerHTML = "<p>결과가 없습니다.</p>";
+//     return;
+//   }
+//   container.innerHTML = items
+//     .map((item) => {
+//       const imgTag = item.image_path
+//         ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`
+//         : "";
+//       return `
+//         <div class="card">
+//           <h4>${item.title}</h4>
+//           <p>${item.description || ""}</p>
+//           ${imgTag}<br/>
+//           <small style="color:#666;">${
+//             item.created_at ? formatDateTime(item.created_at) : ""
+//           }</small>
+//         </div>
+//       `;
+//     })
+//     .join("");
+// }
+
+function escapeHTML(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function renderResults(items) {
   const container = document.getElementById("result");
+  container.innerHTML = "";
+
   if (!items || items.length === 0) {
-    container.innerHTML = "<p>결과가 없습니다.</p>";
+    container.textContent = "결과가 없습니다.";
     return;
   }
+
   container.innerHTML = items
     .map((item) => {
+      const safeTitle = escapeHTML(item.title);
+      const safeDesc = escapeHTML(item.description || "");
+      const safeDate = item.created_at ? formatDateTime(item.created_at) : "";
+
       const imgTag = item.image_path
-        ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`
+        ? `<img src="${baseurl}/${escapeHTML(
+            item.image_path
+          )}" style="max-width:100px;" />`
         : "";
+
       return `
         <div class="card">
-          <h4>${item.title}</h4>
-          <p>${item.description || ""}</p>
+          <h4>${safeTitle}</h4>
+          <p>${safeDesc}</p>
           ${imgTag}<br/>
-          <small style="color:#666;">${
-            item.created_at ? formatDateTime(item.created_at) : ""
-          }</small>
+          <small style="color:#666;">${safeDate}</small>
         </div>
       `;
     })

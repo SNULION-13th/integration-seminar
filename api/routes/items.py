@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
 from schemas import DashboardItemCreate, DashboardItemResponse
+from sqlalchemy import select  # 파일 상단에 추가
 
 router = APIRouter()
 
@@ -76,3 +77,14 @@ async def save_upload_file(upload_file: UploadFile, destination: str):
 
     await run_in_threadpool(write_file)
     upload_file.file.close()
+
+
+@router.get("/", response_model=list[DashboardItemResponse], status_code=200)
+async def get_items():
+    """모든 대시보드 아이템을 최신순으로 조회한다."""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(DashboardItem).order_by(DashboardItem.created_at.desc())
+        )
+        items = result.scalars().all()
+        return items
