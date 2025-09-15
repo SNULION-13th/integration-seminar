@@ -1,6 +1,39 @@
-// main.js
+// main.js - XSS 보안 강화 버전
 
 const baseurl = "http://localhost:8000";
+
+// XSS 방지를 위한 HTML 이스케이프 함수
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '/': '&#x2F;'
+  };
+  
+  return text.replace(/[&<>"'/]/g, function(m) {
+    return map[m];
+  });
+}
+
+// 안전한 텍스트 노드 생성 함수
+function createTextNode(text) {
+  return document.createTextNode(text || '');
+}
+
+// 안전한 HTML 요소 생성 함수
+function createSafeElement(tagName, textContent, className = '') {
+  const element = document.createElement(tagName);
+  element.textContent = textContent || '';
+  if (className) {
+    element.className = className;
+  }
+  return element;
+}
 
 function addItem() {
   const title = document.getElementById("title").value;
@@ -26,15 +59,19 @@ function addItem() {
       renderResults([data]);
     })
     .catch((err) => {
-      document.getElementById(
-        "result"
-      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+      // 에러 메시지도 안전하게 표시
+      const resultContainer = document.getElementById("result");
+      resultContainer.innerHTML = '';
+      const errorElement = createSafeElement('p', `Error: ${err}`, 'error-message');
+      errorElement.style.color = 'red';
+      resultContainer.appendChild(errorElement);
     });
 }
 
 function searchItems() {
+  // TODO: 실제 서버에 GET 요청을 보내야 함
   const query = document.getElementById("query").value;
-  fetch(`${baseurl}/search?query=${encodeURIComponent(query)}`)
+  fetch(`${baseurl}/search/?query=${encodeURIComponent(query)}`)
     .then((response) => response.json())
     .then((data) => {
       if (Array.isArray(data.results)) {
@@ -44,9 +81,12 @@ function searchItems() {
       }
     })
     .catch((err) => {
-      document.getElementById(
-        "result"
-      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+      // 에러 메시지도 안전하게 표시
+      const resultContainer = document.getElementById("result");
+      resultContainer.innerHTML = '';
+      const errorElement = createSafeElement('p', `Error: ${err}`, 'error-message');
+      errorElement.style.color = 'red';
+      resultContainer.appendChild(errorElement);
     });
 }
 
@@ -64,27 +104,53 @@ function formatDateTime(isoStr) {
   return `${year}-${month}-${date} ${hour}:${minute}:${second}`;
 }
 
+// XSS 보안 강화된 renderResults 함수
 function renderResults(items) {
   const container = document.getElementById("result");
+  
+  // 기존 내용 완전히 제거
+  container.innerHTML = '';
+  
   if (!items || items.length === 0) {
-    container.innerHTML = "<p>결과가 없습니다.</p>";
+    const noResultsElement = createSafeElement('p', '결과가 없습니다.');
+    container.appendChild(noResultsElement);
     return;
   }
-  container.innerHTML = items
-    .map((item) => {
-      const imgTag = item.image_path
-        ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`
-        : "";
-      return `
-        <div class="card">
-          <h4>${item.title}</h4>
-          <p>${item.description || ""}</p>
-          ${imgTag}<br/>
-          <small style="color:#666;">${
-            item.created_at ? formatDateTime(item.created_at) : ""
-          }</small>
-        </div>
-      `;
-    })
-    .join("");
+
+  items.forEach((item) => {
+    // 카드 컨테이너 생성
+    const cardElement = createSafeElement('div', '', 'card');
+    
+    // 제목 생성 (안전하게)
+    const titleElement = createSafeElement('h4', item.title);
+    cardElement.appendChild(titleElement);
+    
+    // 설명 생성 (안전하게)
+    if (item.description) {
+      const descElement = createSafeElement('p', item.description);
+      cardElement.appendChild(descElement);
+    }
+    
+    // 이미지 생성 (안전하게)
+    if (item.image_path) {
+      const imgElement = document.createElement('img');
+      imgElement.src = `${baseurl}/${escapeHtml(item.image_path)}`;
+      imgElement.style.maxWidth = '100px';
+      imgElement.style.marginTop = '10px';
+      imgElement.style.display = 'block';
+      cardElement.appendChild(imgElement);
+    }
+    
+    // 날짜 생성 (안전하게)
+    if (item.created_at) {
+      const dateElement = createSafeElement('small', formatDateTime(item.created_at));
+      dateElement.style.color = '#666';
+      dateElement.style.display = 'block';
+      dateElement.style.marginTop = '10px';
+      cardElement.appendChild(dateElement);
+    }
+    
+    // 카드를 컨테이너에 추가
+    container.appendChild(cardElement);
+  });
 }
