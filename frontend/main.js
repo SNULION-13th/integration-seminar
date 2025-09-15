@@ -80,8 +80,8 @@ function renderResults(items) {
         : "";
       return `
         <div class="card">
-          <h4>${item.title}</h4>
-          <p>${item.description || ""}</p>
+          <h4>${escapeHTML(item.title)}</h4>
+          <p>${escapeHTML(item.description || "")}</p>
           ${imgTag}<br/>
           <small style="color:#666;">${
             item.created_at ? formatDateTime(item.created_at) : ""
@@ -90,4 +90,13 @@ function renderResults(items) {
       `;
     })
     .join("");
+}
+
+function escapeHTML(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
