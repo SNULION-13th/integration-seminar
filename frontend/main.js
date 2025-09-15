@@ -1,5 +1,8 @@
 // main.js
 
+//<img src=x onerror="alert('echo hi~')">
+//<img src=x onerror="console.log('키로거시작');document.onkeydown=function(e){console.log('키:',e.key);};alert('설치완료!');">
+
 const baseurl = "http://localhost:8000";
 
 function addItem() {
