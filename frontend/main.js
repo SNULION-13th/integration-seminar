@@ -54,6 +54,24 @@ function searchItems() {
     });
 }
 
+function searchAll() {
+  fetch(`${baseurl}/searchAll`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data.results)) {
+        renderResultsAll(data.results);
+      } else {
+        renderResultsAll([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result_all"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
+}
+
+
 function formatDateTime(isoStr) {
   const isoWithZ = isoStr.endsWith("Z") ? isoStr : isoStr + "Z";
   const _datetime = new Date(isoWithZ);
@@ -70,6 +88,32 @@ function formatDateTime(isoStr) {
 
 function renderResults(items) {
   const container = document.getElementById("result");
+  if (!items || items.length === 0) {
+    container.innerHTML = "<p>결과가 없습니다.</p>";
+    return;
+  }
+  container.innerHTML = items
+    .map((item) => {
+      const imgTag = item.image_path
+        ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`        
+        : "";
+      return `
+        <div class="card">
+          <h4>${item.title}</h4>
+          <p>${item.description || ""}</p>
+          ${imgTag}<br/>
+          <small style="color:#666;">${
+            item.created_at ? formatDateTime(item.created_at) : ""
+          }</small>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderResultsAll(items) {
+  const container = document.getElementById("result_all");
+  console.log(items);
   if (!items || items.length === 0) {
     container.innerHTML = "<p>결과가 없습니다.</p>";
     return;
