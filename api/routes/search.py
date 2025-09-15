@@ -1,7 +1,9 @@
 import orjson
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
+from models import DashboardItem
 from schemas import DashboardItemResponse, SearchResults
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 

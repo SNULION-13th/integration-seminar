@@ -8,9 +8,31 @@ from dependencies import parse_dashboard_form
 from fastapi import APIRouter, Depends, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
-from schemas import DashboardItemCreate, DashboardItemResponse
+from schemas import DashboardItemCreate, DashboardItemResponse, SearchResults
+from sqlalchemy import select
 
 router = APIRouter()
+
+
+@router.get("/all", response_model=SearchResults, status_code=200)
+async def get_all_items():
+    async with AsyncSessionLocal() as session:
+        results = await session.execute(
+            select(DashboardItem).order_by(DashboardItem.created_at.desc())
+        )
+        rows = results.scalars().all()
+        items = [
+            DashboardItemResponse(
+                id=item.id,
+                title=item.title,
+                description=item.description,
+                image_path=item.image_path,
+                created_at=item.created_at,
+            )
+            for item in rows
+        ]
+
+        return SearchResults(results=items)
 
 
 @router.post("/", response_model=DashboardItemResponse, status_code=201)
