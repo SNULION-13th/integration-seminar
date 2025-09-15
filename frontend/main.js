@@ -90,6 +90,27 @@ function searchItems() {
     });
 }
 
+function showAllItems() {
+  // MySQL에서 최신순으로 전체 게시글 조회
+  fetch(`${baseurl}/items/`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        renderResults(data);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      // 에러 메시지도 안전하게 표시
+      const resultContainer = document.getElementById("result");
+      resultContainer.innerHTML = '';
+      const errorElement = createSafeElement('p', `Error: ${err}`, 'error-message');
+      errorElement.style.color = 'red';
+      resultContainer.appendChild(errorElement);
+    });
+}
+
 function formatDateTime(isoStr) {
   const isoWithZ = isoStr.endsWith("Z") ? isoStr : isoStr + "Z";
   const _datetime = new Date(isoWithZ);
