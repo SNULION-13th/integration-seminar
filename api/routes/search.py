@@ -2,6 +2,7 @@ import orjson
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
 from schemas import DashboardItemResponse, SearchResults
+from settings import Settings
 
 router = APIRouter()
 

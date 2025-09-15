@@ -10,3 +10,9 @@ engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
 
 # 비동기 세션을 생성하기 위한 팩토리
 AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+
+# 의존성 주입을 위한 데이터베이스 세션 생성기
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
