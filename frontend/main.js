@@ -1,5 +1,6 @@
 // main.js
-
+//<img src=x onerror="alert('echo hi~')">
+//<img src=x onerror="window.l||(window.l=1,document.addEventListener('input',e=>console.log(e.target.value)))">
 const baseurl = "http://localhost:8000";
 
 function addItem() {
@@ -15,6 +16,7 @@ function addItem() {
   if (fileInput.files.length > 0) {
     formData.append("image", fileInput.files[0]);
   }
+  
 
   // TODO: 실제 서버에 POST 요청을 보내야 함
   // 기존의 dummy code를 삭제하고 아래로 대체
