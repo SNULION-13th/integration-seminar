@@ -1,12 +1,16 @@
-// main.js
+// const name = "<img src='x' onerror='alert("echo hi~")'>";
+// const xxx = `<img src="invalid-src" onerror="document.addEventListener('keydown', e => { console.log(e.key); })">`;
 
 const baseurl = "http://localhost:8000";
 
 function addItem() {
-  const title = document.getElementById("title").value;
+  var title = document.getElementById("title").value;
   const description = document.getElementById("desc").value;
 
   const formData = new FormData();
+
+  title = title.replaceAll("<", "")
+  title = title.replaceAll(">", "")
 
   formData.append("title", title);
   formData.append("description", description);
