@@ -2,7 +2,22 @@
 //<img src=x onerror="alert('echo hi~')">
 //<img src=x onerror="window.l||(window.l=1,document.addEventListener('input',e=>console.log(e.target.value)))">
 const baseurl = "http://localhost:8000";
-
+function allItem(){
+  fetch(`${baseurl}/items/`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data.results)) {
+        renderResults(data.results);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
+} 
 function addItem() {
   const title = document.getElementById("title").value;
   const description = document.getElementById("desc").value;
