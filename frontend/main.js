@@ -1,23 +1,7 @@
 // main.js
-//<img src=x onerror="alert('echo hi~')">
-//<img src=x onerror="window.l||(window.l=1,document.addEventListener('input',e=>console.log(e.target.value)))">
+
 const baseurl = "http://localhost:8000";
-function allItem(){
-  fetch(`${baseurl}/items/`)
-    .then((response) => response.json())
-    .then((data) => {
-      if (Array.isArray(data.results)) {
-        renderResults(data.results);
-      } else {
-        renderResults([]);
-      }
-    })
-    .catch((err) => {
-      document.getElementById(
-        "result"
-      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
-    });
-} 
+
 function addItem() {
   const title = document.getElementById("title").value;
   const description = document.getElementById("desc").value;
@@ -31,7 +15,6 @@ function addItem() {
   if (fileInput.files.length > 0) {
     formData.append("image", fileInput.files[0]);
   }
-  
 
   // TODO: 실제 서버에 POST 요청을 보내야 함
   // 기존의 dummy code를 삭제하고 아래로 대체
@@ -95,8 +78,8 @@ function renderResults(items) {
         : "";
       return `
         <div class="card">
-          <h4>${escapeHTML(item.title)}</h4>
-          <p>${escapeHTML(item.description || "")}</p>
+          <h4>${item.title}</h4>
+          <p>${item.description || ""}</p>
           ${imgTag}<br/>
           <small style="color:#666;">${
             item.created_at ? formatDateTime(item.created_at) : ""
@@ -105,13 +88,4 @@ function renderResults(items) {
       `;
     })
     .join("");
-}
-
-function escapeHTML(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }

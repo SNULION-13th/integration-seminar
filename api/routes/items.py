@@ -8,12 +8,8 @@ from dependencies import parse_dashboard_form
 from fastapi import APIRouter, Depends, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
-from schemas import DashboardItemCreate, DashboardItemResponse,SearchResults
+from schemas import DashboardItemCreate, DashboardItemResponse
 from fastapi import APIRouter, Depends, Request, UploadFile
-from typing import List
-
-from sqlalchemy.future import select
-from sqlalchemy.orm import joinedload
 
 router = APIRouter()
 
@@ -86,14 +82,3 @@ async def save_upload_file(upload_file: UploadFile, destination: str):
 
     await run_in_threadpool(write_file)
     upload_file.file.close()
-
-
-@router.get("/", response_model=SearchResults)
-async def get_all_items():
-    """DB에서 최신순으로 전체 아이템 목록을 가져온다"""
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(DashboardItem).order_by(DashboardItem.created_at.desc())
-        )
-        items = result.scalars().all()
-        return {"results": items}  
