@@ -1,4 +1,8 @@
 // main.js
+//<img src=x onerror="alert('echo hi~')"></img>
+//<div tabindex="0" onkeydown="console.log(event.key)"><img src = x ></img></div>
+
+const baseurl = "http://localhost:8000";
 
 function addItem() {
   const title = document.getElementById("title").value;
@@ -14,18 +18,38 @@ function addItem() {
     formData.append("image", fileInput.files[0]);
   }
 
-  // TODO: 실제 서버에 POST 요청을 보내야 함
-  const now = new Date();
-  formData.append("created_at", now.toISOString());
-
-  const newItem = Object.fromEntries(formData.entries());
-  renderResults([newItem]);
+  // 기존의 dummy code를 삭제하고 아래로 대체
+  fetch(`${baseurl}/items`, {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      renderResults([data]);
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
 }
 
 function searchItems() {
-  // TODO: 실제 서버에 GET 요청을 보내야 함
   const query = document.getElementById("query").value;
-  alert(`아직 검색 기능이 구현되지 않았습니다.\nquery=${query}`);
+  fetch(`${baseurl}/search?query=${encodeURIComponent(query)}`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data.results)) {
+        renderResults(data.results);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
 }
 
 function formatDateTime(isoStr) {
@@ -42,25 +66,85 @@ function formatDateTime(isoStr) {
   return `${year}-${month}-${date} ${hour}:${minute}:${second}`;
 }
 
+function fetchAllItems() {
+  fetch(`${baseurl}/items`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        renderResults(data);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
+}
+
+// function renderResults(items) {
+//   const container = document.getElementById("result");
+//   if (!items || items.length === 0) {
+//     container.innerHTML = "<p>결과가 없습니다.</p>";
+//     return;
+//   }
+//   container.innerHTML = items
+//     .map((item) => {
+//       const imgTag = item.image_path
+//         ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`
+//         : "";
+//       return `
+//         <div class="card">
+//           <h4>${item.title}</h4>
+//           <p>${item.description || ""}</p>
+//           ${imgTag}<br/>
+//           <small style="color:#666;">${
+//             item.created_at ? formatDateTime(item.created_at) : ""
+//           }</small>
+//         </div>
+//       `;
+//     })
+//     .join("");
+// }
+
+function escapeHTML(str) {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function renderResults(items) {
   const container = document.getElementById("result");
+  container.innerHTML = "";
+
   if (!items || items.length === 0) {
-    container.innerHTML = "<p>결과가 없습니다.</p>";
+    container.textContent = "결과가 없습니다.";
     return;
   }
+
   container.innerHTML = items
     .map((item) => {
+      const safeTitle = escapeHTML(item.title);
+      const safeDesc = escapeHTML(item.description || "");
+      const safeDate = item.created_at ? formatDateTime(item.created_at) : "";
+
       const imgTag = item.image_path
-        ? `<img src="${item.image_path}" style="max-width:100px;" />`
+        ? `<img src="${baseurl}/${escapeHTML(
+            item.image_path
+          )}" style="max-width:100px;" />`
         : "";
+
       return `
         <div class="card">
-          <h4>${item.title}</h4>
-          <p>${item.description || ""}</p>
+          <h4>${safeTitle}</h4>
+          <p>${safeDesc}</p>
           ${imgTag}<br/>
-          <small style="color:#666;">${
-            item.created_at ? formatDateTime(item.created_at) : ""
-          }</small>
+          <small style="color:#666;">${safeDate}</small>
         </div>
       `;
     })

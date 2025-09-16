@@ -1,0 +1,37 @@
+name: Python tests
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      DB_USER: "test_user"
+      DB_PASSWORD: "test_password"
+      DB_NAME: "test_db"
+      REDIS_PASSWORD: "test_password"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install and configure uv
+        run: |
+          pip install uv
+          # uv를 사용하여 api 디렉토리의 pyproject.toml과 uv.lock을 기반으로 의존성을 설치합니다.
+          # api 디렉토리로 이동하여 uv sync를 실행합니다.
+          cd api
+          uv sync
+
+      - name: Run tests
+        run: |
+          # 테스트 실행을 위해 api 디렉토리로 이동합니다.
+          cd api
+          python -m pytest -vv tests/
