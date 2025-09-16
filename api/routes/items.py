@@ -9,6 +9,8 @@ from fastapi import APIRouter, Depends, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
 from schemas import DashboardItemCreate, DashboardItemResponse
+from sqlalchemy import select, desc
+from typing import List
 
 router = APIRouter()
 
@@ -65,6 +67,26 @@ async def create_item(
             created_at=db_item.created_at,
         )
 
+@router.get("/all", response_model=List[DashboardItemResponse])
+async def get_all_items():
+    """최신순으로 전체 게시글을 반환한다."""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(DashboardItem).order_by(desc(DashboardItem.created_at))
+        )
+        items = result.scalars().all()
+
+    # schemas.DashboardItemResponse 구조에 맞게 반환
+    return [
+        DashboardItemResponse(
+            id=i.id,
+            title=i.title,
+            description=i.description,
+            image_path=i.image_path,
+            created_at=i.created_at,
+        )
+        for i in items
+    ]
 
 # 파일의 맨 마지막에 아래 함수 추가
 async def save_upload_file(upload_file: UploadFile, destination: str):
