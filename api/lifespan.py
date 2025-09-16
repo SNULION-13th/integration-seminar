@@ -41,3 +41,4 @@ async def lifespan(app):
     yield
 
     app.state.search.close()
+    
