@@ -5,18 +5,16 @@ from datetime import datetime, timezone
 
 from database import AsyncSessionLocal
 from dependencies import parse_dashboard_form
-from fastapi import APIRouter, Depends, Request, UploadFile
+from fastapi import APIRouter, Depends, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
 from schemas import DashboardItemCreate, DashboardItemResponse
-from sqlalchemy import select
 
 router = APIRouter()
 
 
 @router.post("/", response_model=DashboardItemResponse, status_code=201)
 async def create_item(
-    request: Request,
     payload_and_image: tuple[DashboardItemCreate, UploadFile | None] = Depends(
         parse_dashboard_form
     ),
@@ -49,17 +47,6 @@ async def create_item(
         # DB에서 자동 생성된 ID 등을 로드
         await session.refresh(db_item)
 
-        es_doc = {
-            "title": payload.title,
-            "description": payload.description,
-            "created_at": now_utc.isoformat(),
-        }
-        if saved_path:
-            es_doc["image_path"] = saved_path
-
-        # Elasticsearch 색인
-        request.app.state.search.index_item(db_item.id, es_doc)
-
         return DashboardItemResponse(
             id=db_item.id,
             title=db_item.title,
@@ -67,27 +54,6 @@ async def create_item(
             image_path=db_item.image_path,
             created_at=db_item.created_at,
         )
-
-
-@router.get("/", response_model=list[DashboardItemResponse])
-async def get_all_items():
-    """MySQL에서 전체 게시글을 최신순으로 조회한다."""
-    async with AsyncSessionLocal() as session:
-        # created_at 기준으로 내림차순 정렬하여 최신순으로 조회
-        stmt = select(DashboardItem).order_by(DashboardItem.created_at.desc())
-        result = await session.execute(stmt)
-        items = result.scalars().all()
-
-        return [
-            DashboardItemResponse(
-                id=item.id,
-                title=item.title,
-                description=item.description,
-                image_path=item.image_path,
-                created_at=item.created_at,
-            )
-            for item in items
-        ]
 
     # 파일의 맨 마지막에 아래 함수 추가
 
