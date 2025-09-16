@@ -31,8 +31,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install uv
-          # '--with test' 옵션을 추가하여 pytest를 포함한 테스트 의존성을 설치합니다.
-          uv sync --with test
+          uv pip install .[test]
 
       - name: Run tests
         run: |
