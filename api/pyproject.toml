@@ -66,5 +66,6 @@ exclude = ["tests*", "uploads*"]
 [project.optional-dependencies]
 test = [
     "pytest",
-    "httpx",  # TestClient를 위해 httpx를 추가합니다.
+    "httpx",
+    "aiosqlite",
 ]
