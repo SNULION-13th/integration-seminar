@@ -34,4 +34,4 @@ jobs:
         run: |
           # 테스트 실행을 위해 api 디렉토리로 이동합니다.
           cd api
-          python -m pytest -vv tests/
+          uv run python -m pytest -vv tests/
