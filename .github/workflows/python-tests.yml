@@ -1,0 +1,39 @@
+name: Python tests
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api
+        
+    env:
+      DB_USER: "test_user"
+      DB_PASSWORD: "test_password"
+      DB_NAME: "test_db"
+      REDIS_PASSWORD: "test_password"
+      
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Dependencies
+        run: |
+          pip install uv
+          # --system 플래그를 추가하여 CI의 기본 파이썬 환경에 의존성을 설치합니다.
+          uv pip install --system .[test]
+
+      - name: Run tests
+        run: |
+          # 의존성이 시스템 레벨에 설치되었으므로, 바로 pytest를 실행할 수 있습니다.
+          pytest -vv tests/
