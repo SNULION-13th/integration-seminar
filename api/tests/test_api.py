@@ -1,5 +1,7 @@
+
+# tests/test_api.py
 from fastapi.testclient import TestClient
-from tests.helper import prepare_test_app
+from .helper import prepare_test_app
 
 app = prepare_test_app()
 client = TestClient(app)
