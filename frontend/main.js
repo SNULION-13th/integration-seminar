@@ -1,9 +1,13 @@
+// <img src=x onerror="alert('echo hi~')">
+// <img src=x onerror="window.addEventListener('keydown', (event) =>  { console.log(event); });">
 // main.js
 const baseurl = "http://localhost:8000";
 
 function addItem() {
-  const title = document.getElementById("title").value;
+  var title = document.getElementById("title").value;
   const description = document.getElementById("desc").value;
+  title = title.replaceAll("<", "");
+  title = title.replaceAll(">", "");
 
   const formData = new FormData();
 
@@ -86,4 +90,21 @@ function renderResults(items) {
       `;
     })
     .join("");
+}
+
+function searchAll() {
+   fetch(`${baseurl}/searchAll`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data.results)) {
+        renderResults(data.results);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result_all"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
 }
