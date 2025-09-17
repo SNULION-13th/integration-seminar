@@ -1,5 +1,11 @@
 // main.js
 
+// 1번 과제 : <img src="df" onerror="alert('echo hi~')">
+// 2번 <img src="df" onerror="document.onkeydown = function(e) {console.log('입력된 키:', e.key); }">
+
+// 이 파일 자체가 도커파일 형태로 컨테이너에서 돌아가고 있는 느낌이라.. 바로 반영이 당연히 안되고
+// docker compose up --build -d를 해줘야함.
+
 const baseurl = "http://localhost:8000";
 
 function addItem() {
@@ -68,7 +74,7 @@ function formatDateTime(isoStr) {
 function renderResults(items) {
   const container = document.getElementById("result");
   if (!items || items.length === 0) {
-    container.innerHTML = "<p>결과가 없습니다.</p>";
+    container.innerHTML = "<p>없습니다.</p>";
     return;
   }
   container.innerHTML = items
@@ -78,8 +84,18 @@ function renderResults(items) {
         : "";
       return `
         <div class="card">
-          <h4>${item.title}</h4>
-          <p>${item.description || ""}</p>
+          <h4>${item.title
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;")}</h4>
+          <p>${
+            item.description
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#39;") || ""
+          }</p>
           ${imgTag}<br/>
           <small style="color:#666;">${
             item.created_at ? formatDateTime(item.created_at) : ""
