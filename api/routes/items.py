@@ -5,10 +5,11 @@ from datetime import datetime, timezone
 
 from database import AsyncSessionLocal
 from dependencies import parse_dashboard_form
-from fastapi import APIRouter, Depends, Request, UploadFile
+from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
-from schemas import DashboardItemCreate, DashboardItemResponse
+from schemas import DashboardItemCreate, DashboardItemResponse, SearchResults
+from sqlalchemy import desc, select
 
 router = APIRouter()
 
@@ -76,3 +77,13 @@ async def save_upload_file(upload_file: UploadFile, destination: str):
 
     await run_in_threadpool(write_file)
     upload_file.file.close()
+
+@router.get("/all", response_model=SearchResults)
+async def get_all_items():
+    """MySQL에서 전체 게시글을 최신순으로 조회"""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(DashboardItem).order_by(desc(DashboardItem.created_at))
+        )
+        items = result.scalars().all()
+        return SearchResults(results=items)
