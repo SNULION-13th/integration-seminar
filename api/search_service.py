@@ -77,5 +77,12 @@ class SearchService:
         )
         return result.get("hits", {}).get("hits", [])
 
+    def get_all_items(self) -> List[Dict[str, Any]]:
+        """모든 문서를 리스트 형태로 반환"""
+        result = self.es.search(
+            index=self.INDEX_NAME, query={"match_all": {}}, size=1000  # 최대 1000개 문서 반환
+        )
+        return result.get("hits", {}).get("hits", [])
+
     def close(self) -> None:
         self.es.close()

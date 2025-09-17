@@ -51,3 +51,23 @@ async def search_items(query: str, request: Request):
             pass
 
     return SearchResults(results=hits)
+
+
+@router.get("/all", response_model=SearchResults, status_code=200)
+async def get_all_items(request: Request):
+    """Elasticsearch에서 모든 아이템 반환"""
+    try:
+        # run_in_threadpool로 감싸서 동기 함수 호출
+        result = await run_in_threadpool(request.app.state.search.get_all_items)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search error: {e}")
+
+    hits = []
+    for hit in result:
+        src = hit.get("_source", {})
+        try:
+            hits.append(DashboardItemResponse(**src, id=int(hit.get("_id", 0))))
+        except Exception:
+            continue  # 데이터가 이상할 경우 skip
+
+    return SearchResults(results=hits)
