@@ -54,6 +54,29 @@ function searchItems() {
     });
 }
 
+function showAllItems() {
+  fetch(`${baseurl}/items/`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        renderResults(data);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      const resultContainer = document.getElementById("result");
+      resultContainer.innerHTML = "";
+      const errorElement = createSafeElement(
+        "p",
+        `Error: ${err}`,
+        "error-message"
+      );
+      errorElement.style.color = "red";
+      resultContainer.appendChild(errorElement);
+    });
+}
+
 function formatDateTime(isoStr) {
   const isoWithZ = isoStr.endsWith("Z") ? isoStr : isoStr + "Z";
   const _datetime = new Date(isoWithZ);
