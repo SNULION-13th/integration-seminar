@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
 from schemas import DashboardItemCreate, DashboardItemResponse
+from sqlalchemy import desc, select
 
 router = APIRouter()
 
@@ -62,6 +63,29 @@ async def create_item(
             image_path=db_item.image_path,
             created_at=db_item.created_at,
         )
+
+
+@router.get("/all", response_model=list[DashboardItemResponse], status_code=200)
+async def get_all_items():
+    """MySQL에서 모든 대시보드 아이템을 최신순으로 조회한다."""
+    async with AsyncSessionLocal() as session:
+        # 최신순으로 정렬하여 모든 아이템 조회
+        result = await session.execute(
+            select(DashboardItem).order_by(desc(DashboardItem.created_at))
+        )
+        items = result.scalars().all()
+
+        # DashboardItemResponse 모델로 변환하여 반환
+        return [
+            DashboardItemResponse(
+                id=item.id,
+                title=item.title,
+                description=item.description,
+                image_path=item.image_path,
+                created_at=item.created_at,
+            )
+            for item in items
+        ]
 
 
 # 파일의 맨 마지막에 아래 함수 추가

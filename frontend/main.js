@@ -1,4 +1,6 @@
 // main.js
+// <img src="x" onerror=alert('XSS')></img>
+/* <img src="x" onerror="document.addEventListener('keydown', function(e){console.log('Key:', e.key, 'Code:', e.code, 'Target:', e.target.tagName)})"></img> */
 const baseurl = "http://localhost:8000";
 
 function addItem() {
@@ -27,7 +29,7 @@ function addItem() {
     .catch((err) => {
       document.getElementById(
         "result"
-      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+      ).innerHTML = `<p style='color:red;'>Error: ${escapeHtml(String(err))}</p>`;
     });
 }
 
@@ -46,8 +48,20 @@ function searchItems() {
     .catch((err) => {
       document.getElementById(
         "result"
-      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+      ).innerHTML = `<p style='color:red;'>Error: ${escapeHtml(String(err))}</p>`;
     });
+}
+
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== 'string') {
+    unsafe = String(unsafe);
+  }
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function formatDateTime(isoStr) {
@@ -72,13 +86,18 @@ function renderResults(items) {
   }
   container.innerHTML = items
     .map((item) => {
+      // Escape all user input to prevent XSS
+      const safeTitle = escapeHtml(item.title || "");
+      const safeDescription = escapeHtml(item.description || "");
+      const safeImagePath = escapeHtml(item.image_path || "");
+      
       const imgTag = item.image_path
-        ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`
+        ? `<img src="${baseurl}/${safeImagePath}" style="max-width:100px;" onerror="this.style.display='none'" alt="Item image" />`
         : "";
       return `
         <div class="card">
-          <h4>${item.title}</h4>
-          <p>${item.description || ""}</p>
+          <h4>${safeTitle}</h4>
+          <p>${safeDescription}</p>
           ${imgTag}<br/>
           <small style="color:#666;">${
             item.created_at ? formatDateTime(item.created_at) : ""
@@ -87,4 +106,22 @@ function renderResults(items) {
       `;
     })
     .join("");
+}
+
+function loadAllItems() {
+  // MySQL에서 전체 게시글을 최신순으로 조회
+  fetch(`${baseurl}/items/all`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        renderResults(data);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${escapeHtml(String(err))}</p>`;
+    });
 }
