@@ -91,3 +91,20 @@ function renderResults(items) {
     })
     .join("");
 }
+
+function searchAll() {
+   fetch(`${baseurl}/searchAll`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data.results)) {
+        renderResults(data.results);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result_all"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
+}
