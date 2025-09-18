@@ -18,10 +18,10 @@ async def create_item(
     request: Request,
     payload_and_image: tuple[DashboardItemCreate, UploadFile | None] = Depends(
         parse_dashboard_form
-    ),
+    ),  # payload_and_image는 parse_dashboard_form 함수의 반환값이 자동으로 들어간다.
 ):
     """새로운 대시보드 아이템을 생성한다."""
-    payload, image = payload_and_image
+    payload, image = payload_and_image  # 들어오는 뭔가가 있겠지.. 그걸 payload와 image로 나눈다.
     now_utc = datetime.now(timezone.utc)
     saved_path = None
 

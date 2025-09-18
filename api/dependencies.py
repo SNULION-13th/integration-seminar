@@ -3,6 +3,8 @@ from typing import Tuple
 from fastapi import File, Form, UploadFile
 from schemas import DashboardItemCreate
 
+# 아~마도 직접 api에 뭐 보내기전에 형식 한번 더 걸러주는 그런느낌인듯.
+
 
 def parse_dashboard_form(
     title: str = Form(...),

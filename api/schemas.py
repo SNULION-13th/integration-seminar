@@ -3,6 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+# DB 테이블 들에 대한 데이터 형식들을 정의해서, 알맞지 않은 데이터 형식이 들어오면 바로 오류 뜨도록 한번 걸러주는 역할.
+
 
 class DashboardItemCreate(BaseModel):
     title: str

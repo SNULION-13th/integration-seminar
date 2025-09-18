@@ -1,7 +1,10 @@
 import orjson
+from database import AsyncSessionLocal
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
+from models import DashboardItem
 from schemas import DashboardItemResponse, SearchResults
+from sqlalchemy import select
 
 router = APIRouter()
 
@@ -52,3 +55,33 @@ async def search_items(query: str, request: Request):
             pass
 
     return SearchResults(results=hits)
+
+
+# 위랑 비슷하게 all item get에 대한 함수도 만든다. 그러나
+@router.get("/items/all", response_model=SearchResults, status_code=200)
+async def search_items_all(request: Request):
+    """전체 아이템 불러오기는 원본인 MySQL에서!"""
+
+    try:
+        # MySQL에서 전체 아이템 조회
+        async with AsyncSessionLocal() as session:
+            query = select(DashboardItem).order_by(DashboardItem.created_at.desc())
+            result = await session.execute(query)
+            items = result.scalars().all()
+
+            # DashboardItemResponse 형식으로 변환
+            hits = [
+                DashboardItemResponse(
+                    id=item.id,
+                    title=item.title,
+                    description=item.description,
+                    image_path=item.image_path,
+                    created_at=item.created_at,
+                )
+                for item in items
+            ]
+
+            return SearchResults(results=hits)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

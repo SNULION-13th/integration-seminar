@@ -8,7 +8,7 @@ from lifespan import lifespan
 # 아래 import를 추가
 from routes import items, search
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan)  # app이 시작할때와 죽을때 lifespan 함수를 따라라.
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,5 +24,8 @@ os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # 아래 라우터를 추가
-app.include_router(items.router, prefix="/items")
+app.include_router(
+    items.router, prefix="/items"
+)  # items에 있는 모든 경로들 앞에 /items라는 prefix를 붙이겠다고 선언하는 데에
+# 사용하는게 router 기능 인것 같음.
 app.include_router(search.router, prefix="/search")

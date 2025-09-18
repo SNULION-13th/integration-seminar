@@ -41,8 +41,32 @@ function addItem() {
 
 function searchItems() {
   // TODO: 실제 서버에 GET 요청을 보내야 함
-  const query = document.getElementById("query").value;
-  fetch(`${baseurl}/search?query=${encodeURIComponent(query)}`)
+  const query = document.getElementById("query").value; // query에는 '검색어'가 들어간다.
+  fetch(`${baseurl}/search?query=${encodeURIComponent(query)}`) // 검색어를 url로 인코딩해주는 함수.
+    // elasticsearch 서버에서 api를 만들때 애초에 이렇게 쿼리식으로 받도록 만들어진 느낌이라서.
+    .then((response) => response.json()) // response를 json 형태로. then 함수는 자동으로 앞의 반환값을 인자로 받는 함수.
+    .then((data) => {
+      // 이전의 반환값이 json이 data로 들어감.
+      if (Array.isArray(data.results)) {
+        renderResults(data.results); // 결과가 배열이면 렌더링
+        // 렌더링은 이미 검색된 모~든 아이템에 대해서 렌더링을 하도록 구현되어서, 전체검색에서도 그냥 그대로 활용 가능.
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      document.getElementById(
+        "result"
+      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+    });
+}
+
+// searchItems와 비슷하게 searchAllItems를 만들 수 있다.
+// 문제는 mysql 서버와의 api를 먼저 만들어야하는 것.
+// 사실상 앞의 함수에서 fetch하는 api 주소만 바꾸면 됨.
+
+function searchAllItems() {
+  fetch(`${baseurl}/search/items/all`) // 백엔드 라우터 프리픽스(`/search`)와 일치시킴
     .then((response) => response.json())
     .then((data) => {
       if (Array.isArray(data.results)) {
