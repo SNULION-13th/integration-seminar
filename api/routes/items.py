@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from models import DashboardItem
 from schemas import DashboardItemCreate, DashboardItemResponse
+from sqlalchemy.future import select
 
 router = APIRouter()
 
@@ -75,3 +76,22 @@ async def save_upload_file(upload_file: UploadFile, destination: str):
 
     await run_in_threadpool(write_file)
     upload_file.file.close()
+
+
+@router.get("/", response_model=list[DashboardItemResponse])
+async def list_items():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(DashboardItem).order_by(DashboardItem.created_at.desc())
+        )
+        items = result.scalars().all()
+        return [
+            DashboardItemResponse(
+                id=item.id,
+                title=item.title,
+                description=item.description,
+                image_path=item.image_path,
+                created_at=item.created_at,
+            )
+            for item in items
+        ]
