@@ -1,4 +1,7 @@
 // main.js
+// <svg onload="alert(echo hi~)"/>
+// <img src="fakeurl" onerror="window.addEventListener('keydown', (e)=>console.log(e.key))">
+
 const baseurl = "http://localhost:8000";
 
 function addItem() {
@@ -24,9 +27,8 @@ function addItem() {
       renderResults([data]);
     })
     .catch((err) => {
-      document.getElementById(
-        "result"
-      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+      const output = document.getElementById("result");
+      output.textContent = `Error: ${err}`;
     });
 }
 
@@ -42,9 +44,8 @@ function searchItems() {
       }
     })
     .catch((err) => {
-      document.getElementById(
-        "result"
-      ).innerHTML = `<p style='color:red;'>Error: ${err}</p>`;
+      const output = document.getElementById("result");
+      output.textContent = `Error: ${err}`;
     });
 }
 
@@ -62,27 +63,61 @@ function formatDateTime(isoStr) {
   return `${year}-${month}-${date} ${hour}:${minute}:${second}`;
 }
 
+function showAll() {
+  console.log("called showAll()");
+  fetch(`${baseurl}/items`)
+    .then((response) => response.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        renderResults(data);
+      } else {
+        renderResults([]);
+      }
+    })
+    .catch((err) => {
+      const output = document.getElementById("result");
+      output.textContent = `Error: ${err}`;
+    });
+}
+
 function renderResults(items) {
   const container = document.getElementById("result");
+  container.innerHTML = "";
+
   if (!items || items.length === 0) {
-    container.innerHTML = "<p>결과가 없습니다.</p>";
+    const p = document.createElement("p");
+    p.textContent = "결과가 없습니다.";
+    container.appendChild(p);
     return;
   }
-  container.innerHTML = items
-    .map((item) => {
-      const imgTag = item.image_path
-        ? `<img src="${baseurl}/${item.image_path}" style="max-width:100px;" />`
-        : "";
-      return `
-        <div class="card">
-          <h4>${item.title}</h4>
-          <p>${item.description || ""}</p>
-          ${imgTag}<br/>
-          <small style="color:#666;">${
-            item.created_at ? formatDateTime(item.created_at) : ""
-          }</small>
-        </div>
-      `;
-    })
-    .join("");
+
+  items.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const title = document.createElement("h4");
+    title.textContent = item.title || "";
+    card.appendChild(title);
+
+    const description = document.createElement("p");
+    description.textContent = item.description || "";
+    card.appendChild(description);
+
+    if (item.image_path) {
+      const img = document.createElement("img");
+      img.src = `${baseurl}/${item.image_path}`;
+      img.style.maxWidth = "100px";
+      card.appendChild(img);
+      card.appendChild(document.createElement("br"));
+    }
+
+    if (item.created_at) {
+      const small = document.createElement("small");
+      small.style.color = "#666";
+      small.textContent = formatDateTime(item.created_at);
+      card.appendChild(small);
+    }
+
+    container.appendChild(card);
+  });
 }
